@@ -1,0 +1,1 @@
+fastapi uvicorn sqlalchemy pymysql passlib[bcrypt] python-jose python-dotenv python-multipart
