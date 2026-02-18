@@ -17,3 +17,11 @@ generated_files/
 
 # Node
 node_modules/
+
+__pycache__/
+*.pyc
+venv/
+.env
+uploads/
+generated_payslips/
+static
