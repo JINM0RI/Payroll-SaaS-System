@@ -47,17 +47,17 @@ async def upload_salary(
 ):
     try:
 
-        # 🔥 STEP 1 — Save Uploaded File
+        # STEP 1 — Save Uploaded File
         os.makedirs("uploads", exist_ok=True)
         file_path = os.path.join("uploads", file.filename)
 
         with open(file_path, "wb") as buffer:
             buffer.write(await file.read())
 
-        # 🔥 STEP 2 — Extract Month & Year
+        # STEP 2 — Extract Month & Year
         month_name, year = extract_month_year_from_filename(file.filename)
 
-        # 🔥 STEP 3 — Read Excel
+        # STEP 3 — Read Excel
         df = pd.read_excel(file_path, header=2)
 
         df.columns = (
@@ -77,7 +77,7 @@ async def upload_salary(
             return round(float(value), 2)
 
 
-        # 🔥 STEP 4 — Process Rows
+        # STEP 4 — Process Rows
         for _, row in df.iterrows():
 
             if pd.isna(row.get("emp_id")):
@@ -104,15 +104,17 @@ async def upload_salary(
                 "days_work": safe_float(row.get("days_work")),
                 "basic": safe_float(row.get("basic_+_da")),
                 "hra": safe_float(row.get("hra")),
-                "ot_days": safe_float(row.get("ot_days")),  # ⚠ make sure column exists
+                "ot_days": safe_float(row.get("ot_days")),  
                 "gross_wages": safe_float(row.get("gross_wages")),
                 "pf": safe_float(row.get("epf_@_12%")),
                 "esi": safe_float(row.get("esi_@_0.75%")),
                 "salary_adv": safe_float(row.get("salary_adv")),
                 "net_pay": safe_float(row.get("net_pay")),
+                "other_allowance": safe_float(row.get("other_allowance")),
+                
             })
 
-        # 🔥 STEP 5 — Generate Payslips (ONLY HERE)
+        # STEP 5 — Generate Payslips (ONLY HERE)
         generated_files = generate_modern_payslips(processed, month_name, year)
 
         return {

@@ -10,13 +10,16 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib import styles
 from num2words import num2words
+from reportlab.lib.styles import ParagraphStyle
 
 
-# 🔥 COMPANY DETAILS
+
+#  COMPANY DETAILS
 COMPANY_ADDRESS = "No.27, P.H. Road, Vanagaram, Chennai-600095."
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOGO_PATH = os.path.join(BASE_DIR, "static", "logo.jpeg")
+LOGO_PATH = os.path.join(BASE_DIR, "static", "logo.png")
+
 
 
 def amount_in_words(amount):
@@ -48,7 +51,11 @@ def generate_modern_payslips(employees, month_name, year):
         file_name = f"payslip_{emp['emp_id']}.pdf"
         file_path = os.path.join("generated_payslips", file_name)
 
-        doc = SimpleDocTemplate(file_path)
+        doc = SimpleDocTemplate(
+            file_path,
+            topMargin=15,   # reduce this
+        )
+
         page_width = doc.width
 
         elements = []
@@ -57,21 +64,23 @@ def generate_modern_payslips(employees, month_name, year):
         # ================= LOGO =================
         if os.path.isfile(LOGO_PATH):
             logo = Image(LOGO_PATH)
-            logo.drawHeight = 1.0 * inch
-            logo.drawWidth = 1.3 * inch
+            logo._restrictSize(4* inch, 2* inch)
             logo.hAlign = "LEFT"
             elements.append(logo)
 
-        elements.append(Spacer(1, 5))
+        elements.append(Spacer(1, 2))
 
         # ================= ADDRESS =================
+        address_style = styles_sheet["Normal"]
+        address_style.leftIndent = 75   # adjust this value
+
         elements.append(Paragraph(COMPANY_ADDRESS, styles_sheet["Normal"]))
-        elements.append(Spacer(1, 15))
+        elements.append(Spacer(1, 5))
 
         # ================= TITLE =================
         elements.append(
             Paragraph(
-                f"<para align='center'><b>Payslip for the Month of {month_name} {year}</b></para>",
+                f"<para align='center'><b>Payslip</b></para>",
                 styles_sheet["Heading2"],
             )
         )
@@ -79,10 +88,9 @@ def generate_modern_payslips(employees, month_name, year):
 
         # ================= EMPLOYEE DETAILS =================
         details_data = [
-            ["Employee Name:", emp["name"], "OT Days:", emp.get("ot_days", 0)],
-            ["Employee ID:", emp["emp_id"], "Paid Days:", emp["days_work"]],
+            ["Employee Name:", emp["name"], "Paid Days:", emp["days_work"]],
             ["Pay Period:", f"{month_name} {year}", "LOP Days:", 0],
-            ["Pay Date:", pay_date, "", ""],
+            ["Pay Date:", pay_date, "OT Days:", emp.get("ot_days", 0)],
         ]
 
         details_table = Table(details_data, colWidths=[page_width/4]*4)
@@ -94,14 +102,23 @@ def generate_modern_payslips(employees, month_name, year):
                 ("RIGHTPADDING", (0, 0), (-1, -1), 4),
                 ("TOPPADDING", (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+
+                
+                ("ALIGN", (0, 0), (1, -1), "LEFT"),
+                ("ALIGN", (2, 0), (3, -1), "RIGHT"),
             ])
         )
+
 
         elements.append(details_table)
         elements.append(Spacer(1, 20))
 
         # ================= INCOME TABLE =================
-        deductions = emp["pf"] + emp["esi"] + emp["salary_adv"]
+        deductions = (
+            emp["pf"] +
+            emp["esi"] +
+            emp["salary_adv"]
+        )
 
         income_data = [
             ["Earnings", "Amount", "Deductions", "Amount"],
@@ -110,6 +127,9 @@ def generate_modern_payslips(employees, month_name, year):
 
             ["House Rent Allowance", f"Rs {clean_money(emp['hra'])}",
             "ESI", f"Rs {clean_money(emp['esi'])}"],
+
+            ["Other Allowance", f"Rs {clean_money(emp.get('other_allowance', 0))}",
+            "Advance", f"Rs {clean_money(emp.get('salary_adv', 0))}"],
 
             ["Gross Earnings", f"Rs {clean_money(emp['gross_wages'])}",
             "Total Deductions", f"Rs {clean_money(deductions)}"],
@@ -136,9 +156,9 @@ def generate_modern_payslips(employees, month_name, year):
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
 
                 # Highlight totals
-                ("BACKGROUND", (0, 3), (1, 3), colors.whitesmoke),
-                ("BACKGROUND", (2, 3), (3, 3), colors.whitesmoke),
-                ("FONTNAME", (0, 3), (3, 3), "Helvetica-Bold"),
+                ("BACKGROUND", (0, 4), (1, 4), colors.lightgrey),
+                ("BACKGROUND", (2, 4), (3, 4), colors.lightgrey),
+                ("FONTNAME", (0, 4), (3, 4), "Helvetica-Bold"),
             ])
         )
 
@@ -148,14 +168,12 @@ def generate_modern_payslips(employees, month_name, year):
         # ================= NET PAY =================
         elements.append(
             Paragraph(
-                f"<para align='center'><b>Total Net Pay: Rs {int(float(emp['net_pay']))}</b></para>",
+                f"<para align='center'><b>Net Pay: Rs {int(float(emp['net_pay']))}</b></para>",
                 styles_sheet["Heading2"],
             )
         )
 
-
-
-        elements.append(Spacer(1, 8))
+        elements.append(Spacer(1, 1))
 
         elements.append(
             Paragraph(
@@ -180,6 +198,24 @@ def generate_modern_payslips(employees, month_name, year):
         )
 
         elements.append(signature_table)
+
+        # ===============================================
+        footer_style = ParagraphStyle(
+            "footer_style",
+            parent=styles_sheet["Normal"],
+            leftIndent=140,   # adjust this value
+        )
+
+        elements.append(Spacer(1, 0.2 * inch))
+
+        elements.append(
+            Paragraph(
+                "-This is system generated document-",
+                footer_style
+            )
+        )
+
+
 
         doc.build(elements)
         generated_files.append(file_path)
