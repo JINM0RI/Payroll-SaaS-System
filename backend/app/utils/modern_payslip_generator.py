@@ -227,6 +227,6 @@ def generate_modern_payslips(employees, month_name, year):
 
 
         doc.build(elements)
-        generated_files.append(file_path)
+        generated_files.append(file_name)
 
     return generated_files
