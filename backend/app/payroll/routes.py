@@ -132,6 +132,15 @@ async def upload_salary(
     except Exception as e:
         print("ERROR:", str(e))
         return {"error": str(e)}
+
+@router.get("/preview/{filename}")
+def preview_payslip(filename: str):
+    file_path = os.path.join("generated_payslips", filename)
+
+    return FileResponse(
+        file_path,
+        media_type="application/pdf"
+    )
     
 @router.get("/download-all")
 def download_all_payslips():
