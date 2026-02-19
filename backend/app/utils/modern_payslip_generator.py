@@ -1,6 +1,7 @@
 
 import os
 import calendar
+import re
 from datetime import datetime
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer,
@@ -20,6 +21,12 @@ COMPANY_ADDRESS = "No.27, P.H. Road, Vanagaram, Chennai-600095."
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_PATH = os.path.join(BASE_DIR, "static", "logo.png")
 
+
+def safe_filename(name):
+    name = name.strip()
+    name = re.sub(r'[\\/*?:"<>|]', "", name)  # remove illegal chars
+    name = name.replace(" ", "_")             # replace spaces
+    return name
 
 
 def amount_in_words(amount):
@@ -48,7 +55,9 @@ def generate_modern_payslips(employees, month_name, year):
 
     for emp in employees:
 
-        file_name = f"payslip_{emp['emp_id']}.pdf"
+        employee_name_clean = safe_filename(emp["name"])
+        file_name = f"{employee_name_clean}_payslip.pdf"
+
         file_path = os.path.join("generated_payslips", file_name)
 
         doc = SimpleDocTemplate(

@@ -6,6 +6,8 @@ from ..database import get_db
 from ..models import Employee
 from ..auth.dependencies import get_current_user
 from ..utils.modern_payslip_generator import generate_modern_payslips
+import zipfile
+from fastapi.responses import FileResponse
 
 import io
 
@@ -126,7 +128,31 @@ async def upload_salary(
             "files": generated_files
         }
 
+
     except Exception as e:
         print("ERROR:", str(e))
         return {"error": str(e)}
+    
+@router.get("/download-all")
+def download_all_payslips():
+    folder_path = "generated_payslips"
+    zip_path = f"{folder_path}/all_payslips.zip"
+
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for file in os.listdir(folder_path):
+            if file.endswith(".pdf"):
+                zipf.write(
+                    os.path.join(folder_path, file),
+                    arcname=file
+                )
+
+    return FileResponse(
+        zip_path,
+        media_type="application/zip",
+        filename="All_Payslips.zip"
+    )
+
 
