@@ -25,3 +25,20 @@ venv/
 uploads/
 generated_payslips/
 static
+
+# dependencies
+node_modules/
+
+# next build
+.next/
+
+# environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
