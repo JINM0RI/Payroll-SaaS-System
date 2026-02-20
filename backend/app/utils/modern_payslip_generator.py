@@ -46,12 +46,12 @@ def clean_money(value):
 
 
 
-def generate_modern_payslips(employees, month_name, year):
+def generate_modern_payslips(employees, month_name, year, pay_date):
 
     os.makedirs("generated_payslips", exist_ok=True)
     generated_files = []
 
-    pay_date = datetime.today().strftime("%d-%m-%Y")
+    
 
     for emp in employees:
 
@@ -98,7 +98,7 @@ def generate_modern_payslips(employees, month_name, year):
         # ================= EMPLOYEE DETAILS =================
         details_data = [
             ["Employee Name:", emp["name"], "Paid Days:", emp["days_work"]],
-            ["Pay Period:", f"{month_name} {year}", "LOP Days:", 0],
+            ["Pay Period:", f"{month_name} {year}", "LOP Days:", emp.get("lop_days", 0)],
             ["Pay Date:", pay_date, "OT Days:", emp.get("ot_days", 0)],
         ]
 

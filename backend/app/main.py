@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 from .auth.routes import router as auth_router
 from .payroll.routes import router as payroll_router
+from .employees.routes import router as employee_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,3 +25,5 @@ def root():
     return {"message": "Payroll SaaS Backend Running"}
 
 app.include_router(payroll_router, prefix="/payroll", tags=["Payroll"])
+
+app.include_router(employee_router)

@@ -2,6 +2,8 @@ import os
 from fastapi import APIRouter, UploadFile, File, Depends
 from sqlalchemy.orm import Session
 import pandas as pd
+import calendar
+from datetime import datetime
 from ..database import get_db
 from ..models import Employee
 from ..auth.dependencies import get_current_user
@@ -17,13 +19,12 @@ import calendar
 from datetime import datetime
 
 def extract_month_year_from_filename(filename):
-    # Example: "Jan 26 Salary Statement Vanagaram.xlsx"
     
     match = re.search(r'([A-Za-z]{3})\s*(\d{2})', filename)
 
     if match:
-        month_short = match.group(1).title()   # Jan
-        year_short = int(match.group(2))       # 26
+        month_short = match.group(1).title()   
+        year_short = int(match.group(2))       
         
         # Convert 26 → 2026
         year_full = 2000 + year_short
@@ -40,6 +41,59 @@ def extract_month_year_from_filename(filename):
     return today.strftime("%B"), today.year
 
 
+def extract_month_date_from_sheet(raw_df):
+    month_name = None
+    year = None
+    pay_date = None
+
+    for _, row in raw_df.iterrows():
+        for i, cell in enumerate(row):
+            if pd.isna(cell):
+                continue
+
+            # 🔹 Detect MONTH row
+            if isinstance(cell, str) and cell.strip().lower() == "month":
+
+                next_cell = row[i + 1]
+
+                # Case 1: If it's already datetime
+                if isinstance(next_cell, datetime):
+                    month_name = calendar.month_name[next_cell.month]
+                    year = next_cell.year
+
+                # Case 2: If it's string like "Jan-26"
+                elif isinstance(next_cell, str):
+                    value = next_cell.strip()
+
+                    match = re.search(r'([A-Za-z]{3})[-/ ]?(\d{2,4})', value)
+
+                    if match:
+                        month_abbr = match.group(1).title()
+                        year_part = match.group(2)
+
+                        # Convert 26 → 2026
+                        if len(year_part) == 2:
+                            year = 2000 + int(year_part)
+                        else:
+                            year = int(year_part)
+
+                        try:
+                            month_number = datetime.strptime(month_abbr, "%b").month
+                            month_name = calendar.month_name[month_number]
+                        except:
+                            month_name = month_abbr
+
+            # 🔹 Detect DATE row
+            if isinstance(cell, str) and cell.strip().lower() == "date":
+                next_cell = row[i + 1]
+
+                if isinstance(next_cell, datetime):
+                    pay_date = next_cell.strftime("%d-%m-%Y")
+
+                elif isinstance(next_cell, str):
+                    pay_date = next_cell.strip()
+
+    return month_name, year, pay_date
 
 @router.post("/upload-salary", summary="Upload salary excel file")
 async def upload_salary(
@@ -57,10 +111,13 @@ async def upload_salary(
             buffer.write(await file.read())
 
         # STEP 2 — Extract Month & Year
-        month_name, year = extract_month_year_from_filename(file.filename)
+        raw_df = pd.read_excel(file_path, header=None)
+
+        month_name, year, pay_date = extract_month_date_from_sheet(raw_df)
 
         # STEP 3 — Read Excel
-        df = pd.read_excel(file_path, header=2)
+        raw_df = pd.read_excel(file_path, header=None)
+        df = pd.read_excel(file_path, header=3)
 
         df.columns = (
             df.columns
@@ -113,11 +170,12 @@ async def upload_salary(
                 "salary_adv": safe_float(row.get("salary_adv")),
                 "net_pay": safe_float(row.get("net_pay")),
                 "other_allowance": safe_float(row.get("other_allowance")),
+                "lop_days": safe_float(row.get("lop_days"))
                 
             })
 
         # STEP 5 — Generate Payslips (ONLY HERE)
-        generated_files = generate_modern_payslips(processed, month_name, year)
+        generated_files = generate_modern_payslips(processed,month_name,year,pay_date)
 
         return {
             "total_rows": len(df),
