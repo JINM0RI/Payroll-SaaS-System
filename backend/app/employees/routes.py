@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.models import Employee
-from app.schemas import EmployeeCreate, EmployeeResponse
+from app.models import Employee, User
+from app.schemas import EmployeeCreate, EmployeeResponse, EmployeeDelete
+from app.auth.dependencies import get_current_user
+from app.auth.utils import verify_password
 from sqlalchemy import func
 
 router = APIRouter(
@@ -42,15 +44,27 @@ def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
     return new_employee
 
 @router.delete("/{employee_id}")
-def delete_employee(employee_id: int, db: Session = Depends(get_db)):
-    # Fetch employee
+def delete_employee(
+    employee_id: int,
+    data: EmployeeDelete,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 🔐 Step 1 — Verify password from users table
+    if not verify_password(data.password, current_user.password_hash):
+        raise HTTPException(status_code=403, detail="Invalid password")
+
+    # Step 2 — Find employee
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
 
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Soft delete by marking inactive
+    # Step 3 — Soft delete
     employee.is_active = False
+    employee.deleted_at = func.now()
+    employee.deleted_by = current_user.id
 
     db.commit()
-    return {"message": f"Employee {employee.name} deleted successfully"}
+
+    return {"message": "Employee deleted successfully"}

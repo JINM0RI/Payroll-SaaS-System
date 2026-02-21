@@ -34,3 +34,5 @@ class EmployeeResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class EmployeeDelete(BaseModel):
+    password: str
