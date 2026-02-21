@@ -93,6 +93,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { deleteEmployee } from "@/lib/api";
 
 interface Employee {
   id: number;
@@ -120,18 +121,22 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+  const handleDelete = async (id: string) => {
+  const confirmDelete = window.confirm("Are you sure?");
+    if (!confirmDelete) return;
 
-    try {
-      await api.delete(`/employees/${id}`);
-      alert("Employee deleted successfully");
-      fetchEmployees(); // refresh list
-    } catch (error) {
-      console.error(error);
-      alert("Failed to delete employee");
-    }
-  };
+      const password = window.prompt("Enter admin password:");
+    if (!password) return;
+
+      try {
+        await deleteEmployee(id, password);
+        alert("Deleted successfully");
+        fetchEmployees(); // refresh list
+      } catch (error) {
+        alert("Unable to delete");
+        console.error(error);
+      }
+    };
 
   return (
     <div className="bg-gray-100 min-h-screen py-12 px-6">
@@ -182,7 +187,7 @@ export default function EmployeesPage() {
                     <td className="p-3">
                       <button
                         className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                        onClick={() => handleDelete(emp.id, emp.name)}
+                        onClick={() => handleDelete(emp.id.toString())}
                       >
                         Delete
                       </button>

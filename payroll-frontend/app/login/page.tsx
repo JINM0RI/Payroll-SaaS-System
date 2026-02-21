@@ -21,7 +21,7 @@ export default function LoginPage() {
       const token = response.data.access_token;
 
       // Store token temporarily in localStorage
-      localStorage.setItem("token", token);
+      localStorage.setItem("access_token", response.data.access_token);
 
       // Redirect to dashboard (we create this next)
       router.push("/dashboard");
