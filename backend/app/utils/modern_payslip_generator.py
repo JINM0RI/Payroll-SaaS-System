@@ -16,7 +16,7 @@ from reportlab.lib.styles import ParagraphStyle
 
 
 #  COMPANY DETAILS
-COMPANY_ADDRESS = "No.27, P.H. Road, Vanagaram, Chennai-600095."
+# COMPANY_ADDRESS = "REG-O No52 10tn Avanue ashok nagar Chennai 600085,WORK-No.27, P.H. Road, Vanagaram, Chennai-600095."
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGO_PATH = os.path.join(BASE_DIR, "static", "logo.png")
@@ -62,38 +62,77 @@ def generate_modern_payslips(employees, month_name, year, pay_date):
 
         doc = SimpleDocTemplate(
             file_path,
-            topMargin=15,   # reduce this
+            topMargin=5,   # reduce this
         )
 
         page_width = doc.width
 
         elements = []
         styles_sheet = styles.getSampleStyleSheet()
+        tight_heading = styles_sheet["Heading2"]
+        tight_heading.spaceBefore = 0
+        tight_heading.spaceAfter = 5
 
-        # ================= LOGO =================
+       # ================= HEADER (FINAL CLEAN VERSION) =================
+
         if os.path.isfile(LOGO_PATH):
             logo = Image(LOGO_PATH)
-            logo._restrictSize(4* inch, 2* inch)
-            logo.hAlign = "LEFT"
-            elements.append(logo)
+            logo.drawHeight = 1.2 * inch
+            logo.drawWidth = 4 * inch
+        else:
+            logo = ""
 
-        elements.append(Spacer(1, 2))
+        # ---------- Address Table (Perfect Alignment) ----------
 
-        # ================= ADDRESS =================
-        address_style = styles_sheet["Normal"]
-        address_style.leftIndent = 75   # adjust this value
+        address_data = [
+            ["REG-O:", "No52 10th Avenue, Ashok Nagar"],
+            ["", "Chennai-600085"],
+            ["", ""],
+            ["WORK:", "No.27, P.H. Road, Vanagaram"],
+            ["", "Chennai-600095"],
+        ]
 
-        elements.append(Paragraph(COMPANY_ADDRESS, styles_sheet["Normal"]))
-        elements.append(Spacer(1, 5))
+        address_table = Table(address_data, colWidths=[55, 170])
+
+        address_table.setStyle(TableStyle([
+            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("LEFTPADDING", (0,0), (-1,-1), 0),
+            ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ("TOPPADDING", (0,0), (-1,-1), 0),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 0),
+            ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"),
+        ]))
+
+        # ---------- Main Header Layout ----------
+
+        header_table = Table(
+            [[logo, "", address_table]],
+            colWidths=[
+                4 * inch,                 # logo fixed
+                doc.width - (4 * inch) - 150,  # flexible space
+                225                       # address width
+            ]
+        )
+
+        header_table.setStyle(TableStyle([
+            ("VALIGN", (0,0), (-1,-1), "TOP"),
+            ("LEFTPADDING", (0,0), (-1,-1), 0),
+            ("RIGHTPADDING", (0,0), (-1,-1), 0),
+            ("TOPPADDING", (2,0), (2,0), 22),
+            ("BOTTOMPADDING", (0,0), (-1,-1), 0),
+        ]))
+
+        elements.append(header_table)
+        elements.append(Spacer(1, 20))
 
         # ================= TITLE =================
         elements.append(
             Paragraph(
                 f"<para align='center'><b>Payslip</b></para>",
-                styles_sheet["Heading2"],
+                tight_heading,
             )
         )
-        elements.append(Spacer(1, 20))
+        elements.append(Spacer(1, 8))
 
         # ================= EMPLOYEE DETAILS =================
         details_data = [
@@ -137,10 +176,10 @@ def generate_modern_payslips(employees, month_name, year, pay_date):
             ["House Rent Allowance", f"Rs {clean_money(emp['hra'])}",
             "ESI", f"Rs {clean_money(emp['esi'])}"],
 
-            ["Other Allowance", f"Rs {clean_money(emp.get('other_allowance', 0))}",
+            ["Other Allowance", f"Rs {clean_money(emp.get('ot_amount', 0))}",
             "Advance", f"Rs {clean_money(emp.get('salary_adv', 0))}"],
 
-            ["Gross Earnings", f"Rs {clean_money(emp['gross_wages'])}",
+            ["Gross Earnings", f"Rs {clean_money(emp['earned_wages'])}",
             "Total Deductions", f"Rs {clean_money(deductions)}"],
         ]
 
