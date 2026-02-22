@@ -150,7 +150,10 @@ async def upload_salary(
                 skipped_no_epf.append(emp_id)
                 continue
 
-            employee = db.query(Employee).filter(Employee.emp_id == emp_id).first()
+            employee = db.query(Employee).filter(
+                Employee.emp_id == emp_id,
+                Employee.is_active == True
+            ).first()
 
             if not employee or not employee.email:
                 missing_email.append(emp_id)
@@ -164,13 +167,15 @@ async def upload_salary(
                 "basic": safe_float(row.get("basic_+_da")),
                 "hra": safe_float(row.get("hra")),
                 "ot_days": safe_float(row.get("ot_days")),  
+                "ot_amount": safe_float(row.get("ot_amount")),  
                 "gross_wages": safe_float(row.get("gross_wages")),
                 "pf": safe_float(row.get("epf_@_12%")),
                 "esi": safe_float(row.get("esi_@_0.75%")),
                 "salary_adv": safe_float(row.get("salary_adv")),
                 "net_pay": safe_float(row.get("net_pay")),
                 "other_allowance": safe_float(row.get("other_allowance")),
-                "lop_days": safe_float(row.get("lop_days"))
+                "lop_days": safe_float(row.get("lop_days")),
+                "earned_wages":safe_float(row.get("earned_wages"))
                 
             })
 

@@ -62,8 +62,6 @@ def delete_employee(
 
     # Step 3 — Soft delete
     employee.is_active = False
-    employee.deleted_at = func.now()
-    employee.deleted_by = current_user.id
 
     db.commit()
 
