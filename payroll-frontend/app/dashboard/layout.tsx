@@ -16,7 +16,6 @@ export default function DashboardLayout({
     { name: "Home", path: "/dashboard" },
     { name: "Pay Slip Generator", path: "/dashboard/payslip-generator" },
     { name: "Employees", path: "/dashboard/employees" },
-    { name: "Settings", path: "/dashboard/settings" },
   ];
 
   return (

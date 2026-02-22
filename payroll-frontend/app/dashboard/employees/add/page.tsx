@@ -173,7 +173,7 @@ export default function AddEmployeePage() {
           placeholder="Employee Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full mb-4 p-3 border rounded-md"
+          className="w-full mb-4 p-3 border rounded-md text-black placeholder:text-black"
         />
 
         <input
@@ -183,7 +183,7 @@ export default function AddEmployeePage() {
           placeholder="Employee Email (Optional)"
           value={formData.email}
           onChange={handleChange}
-          className="w-full mb-6 p-3 border rounded-md"
+          className="w-full mb-6 p-3 border rounded-md text-black placeholder:text-black"
         />
 
         <button
