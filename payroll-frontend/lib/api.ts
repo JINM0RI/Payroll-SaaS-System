@@ -22,4 +22,3 @@ export const deleteEmployee = async (
     data: { password: adminPassword },
   });
 };
-
