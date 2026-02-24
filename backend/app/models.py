@@ -9,6 +9,7 @@ class User(Base):
     email = Column(String(150), unique=True, index=True)
     password_hash = Column(Text)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    role = Column(String(50), default="user")
 
 
 
@@ -23,4 +24,3 @@ class Employee(Base):
     
 
     
-

@@ -6,6 +6,7 @@ from .auth.routes import router as auth_router
 from .payroll.routes import router as payroll_router
 from .employees.routes import router as employee_router
 from app.dashboard.routes import router as dashboard_router
+from app import models
 
 Base.metadata.create_all(bind=engine)
 
